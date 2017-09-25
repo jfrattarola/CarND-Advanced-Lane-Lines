@@ -5,13 +5,13 @@ import matplotlib.pyplot as plt
 
 image = mpimg.imread('signs_vehicles_xygrad.png')
 
-def show_images(orig_image, alt_image, alt_text='Alt'):
+def show_images(orig_image, alt_image, alt_text='Alt', orig_text='Original Image'):
     f, (ax1, ax2) = plt.subplots(1, 2, figsize=(24, 9))
     f.tight_layout()
     ax1.imshow(orig_image)
-    ax1.set_title('Original Image', fontsize=50)
+    ax1.set_title(orig_text, fontsize=30)
     ax2.imshow(alt_image, cmap='gray')
-    ax2.set_title(alt_text, fontsize=50)
+    ax2.set_title(alt_text, fontsize=30)
     plt.subplots_adjust(left=0., right=1, top=0.9, bottom=0.)
     plt.show()
 
@@ -95,6 +95,41 @@ def hls_select(img, thresh=(0, 255)):
 
     return binary_output
 
+def combined_sgray(img, grad_thresh=(20,100), s_thresh=(170,255)):
+    # Convert to HLS color space and separate the S channel
+    # Note: img is the undistorted image
+    hls = cv2.cvtColor(img, cv2.COLOR_RGB2HLS)
+    s_channel = hls[:,:,2]
+    scaled_s = np.uint8( 255 * s_channel / np.max(s_channel) )
+
+    # Grayscale image
+    # NOTE: we already saw that standard grayscaling lost color information for the lane lines
+    # Explore gradients in other colors spaces / color channels to see what might work better
+    gray = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
+    
+    # Sobel x
+    sobelx = cv2.Sobel(gray, cv2.CV_64F, 1, 0) # Take the derivative in x
+    abs_sobelx = np.absolute(sobelx) # Absolute x derivative to accentuate lines away from horizontal
+    scaled_sobel = np.uint8(255*abs_sobelx/np.max(abs_sobelx))
+
+    # Threshold x gradient
+    sxbinary = np.zeros_like(scaled_sobel)
+    sxbinary[(scaled_sobel >= grad_thresh[0]) & (scaled_sobel <= grad_thresh[1])] = 1
+
+    # Threshold color channel
+    s_binary = np.zeros_like(scaled_s)
+    s_binary[(scaled_s > s_thresh[0]) & (scaled_s <= s_thresh[1])] = 1
+
+    # Stack each channel to view their individual contributions in green and blue respectively
+    # This returns a stack of the two binary images, whose components you can see as different colors
+    color_binary = np.dstack(( np.zeros_like(sxbinary), sxbinary, s_binary)) * 255
+
+    # Combine the two binary thresholds
+    combined_binary = np.zeros_like(sxbinary)
+    combined_binary[(s_binary == 1) | (sxbinary == 1)] = 1
+
+    return color_binary, combined_binary
+
 # Choose a Sobel kernel size
 ksize = 9 # Choose a larger odd number to smooth gradient measurements
 
@@ -109,3 +144,5 @@ dir_binary = dir_threshold(image, sobel_kernel=15, thresh=(0.7, 1.3))
 show_images(image, dir_binary, 'Direction of Gradient')
 hls_binary = hls_select( image, thresh=(90,255) )
 show_images(image, hls_binary, 'Saturation (HLS)')
+combined_color, combined_binary = combined_sgray(image)
+show_images(combined_color, combined_binary, 'Combined Gradients + Sat', 'Green Gradients; Blue Sat')
