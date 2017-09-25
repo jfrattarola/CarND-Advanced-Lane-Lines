@@ -79,6 +79,22 @@ def dir_threshold(image, sobel_kernel=3, thresh=(0, np.pi/2)):
 
     return dir_binary
 
+def hls_select(img, thresh=(0, 255)):
+    # 1) Convert to HLS color space
+    hls = cv2.cvtColor(img, cv2.COLOR_RGB2HLS)
+
+    # 2) Apply a threshold to the S channel
+    S = hls[:,:,2]
+
+    #convert to 8 bit (0-255)
+    scaled_S = np.uint8( 255 * S / np.max(S) )
+
+    # 3) Return a binary image of threshold result
+    binary_output = np.zeros_like(scaled_S)
+    binary_output[(scaled_S > thresh[0]) & (scaled_S <= thresh[1])] = 1
+
+    return binary_output
+
 # Choose a Sobel kernel size
 ksize = 9 # Choose a larger odd number to smooth gradient measurements
 
@@ -91,4 +107,5 @@ mag_binary = mag_thresh(image, sobel_kernel=ksize, mag_thresh=(30, 100))
 show_images(image, mag_binary, 'Magnitude of Gradient')
 dir_binary = dir_threshold(image, sobel_kernel=15, thresh=(0.7, 1.3))
 show_images(image, dir_binary, 'Direction of Gradient')
-
+hls_binary = hls_select( image, thresh=(90,255) )
+show_images(image, hls_binary, 'Saturation (HLS)')
