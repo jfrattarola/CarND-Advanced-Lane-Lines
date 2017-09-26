@@ -20,7 +20,7 @@ if __name__ == '__main__':
     show_images(image, gradx, 'Sobel X')
     s_binary = hls_mask( image, thresh=(90,255), channel=2 )
     show_images(image, s_binary, 'Saturation (HLS)')
-    h_binary = hls_mask( image, thresh=(15,100), channel=0 )
+    h_binary = hls_mask( image, thresh=(20,30), channel=0 )
     show_images(image, h_binary, 'Hue (HLS)')
     hsg_channels = np.dstack((gradx, h_binary, s_binary)).astype('uint8') * 255
     hsg_binary = np.zeros_like(gradx)
@@ -38,7 +38,7 @@ if __name__ == '__main__':
         show_images(image, gradx, 'Sobel X')
         s_binary = hls_mask( image, thresh=(90,255), channel=2 )
         show_images(image, s_binary, 'Saturation (HLS)')
-        h_binary = hls_mask( image, thresh=(15,100), channel=0 )
+        h_binary = hls_mask( image, thresh=(20,30), channel=0 )
         show_images(image, h_binary, 'Hue (HLS)')
         hsg_channels = np.dstack((gradx, h_binary, s_binary)).astype('uint8') * 255
         hsg_binary = np.zeros_like(gradx)
