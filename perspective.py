@@ -45,8 +45,8 @@ if __name__ == '__main__':
     #calibrate camera
     object_points, image_points = camera_cal_init(FLAGS.caldir)
 
-    s = np.float32([[600, 450], [230, 705], [1075, 705], [685, 450]])
-    d = np.float32([[320, 0], [320, 720], [960, 720], [960, 0]])
+    s = np.float32([[685, 450], [1075, 705], [230, 705], [600, 450]])
+    d = np.float32([[960, 0], [960, 720], [320, 720], [320, 0]])
 
     images = glob.glob(os.path.join(FLAGS.dir, '*.jpg'))
     for fname in images:
@@ -58,4 +58,4 @@ if __name__ == '__main__':
                                        image_points=image_points)
         draw_lines(image, s)
         draw_lines(warped, d)
-        show_images(image, warped, 'Warped')
+        show_images(image, warped, 'Warped', fname)
