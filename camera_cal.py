@@ -45,6 +45,8 @@ if __name__ == '__main__':
                         help='directory to read calibration image files from')
     parser.add_argument('--testdir', type=str, default='test_images', 
                         help='directory to read calibration image files from')
+    parser.add_argument('--debug', type=int, default=0, 
+                        help='print images to screen')
     FLAGS, unparsed = parser.parse_known_args()
 
     object_points, image_points = camera_cal_init(FLAGS.dir)
@@ -56,8 +58,11 @@ if __name__ == '__main__':
         image_size = (image.shape[1], image.shape[0])
         ret, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(object_points, image_points, image_size, None ,None)
         undistorted_image = cv2.undistort(image, mtx, dist, None, mtx)
-        show_images(image, undistorted_image, 'Undistorted Image', 'Distorted Calibration Image')
-
+        if FLAGS.debug == 1:
+            show_images(image, undistorted_image, 'Undistorted Image', 'Distorted Calibration Image')
+        else:
+            cv2.imwrite('output_images/{}'.format(fname), image)
+            cv2.imwrite('output_images/{}_undistorted'.format(fname), undistorted_image)
     #print test image differences
     images = glob.glob(os.path.join(FLAGS.testdir, '*.jpg'))
     for fname in images:
@@ -65,5 +70,9 @@ if __name__ == '__main__':
         image_size = (image.shape[1], image.shape[0])
         ret, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(object_points, image_points, image_size, None ,None)
         undistorted_image = cv2.undistort(image, mtx, dist, None, mtx)
-        show_images(image, undistorted_image, 'Undistorted Image', 'Distorted Test Image')
-        
+        if FLAGS.debug == 1:
+            show_images(image, undistorted_image, 'Undistorted Image', 'Distorted Test Image')
+        else:
+            cv2.imwrite('output_images/{}'.format(fname), image)
+            cv2.imwrite('output_images/{}_undistorted'.format(fname), undistorted_image)
+
