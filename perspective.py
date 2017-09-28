@@ -51,7 +51,14 @@ if __name__ == '__main__':
     images = glob.glob(os.path.join(FLAGS.dir, '*.jpg'))
     for fname in images:
         image = mpimg.imread(fname)
-        warped = transform_perspective(image, 
+        gradx = gradient_mask(image, orient='x', sobel_kernel=9, thresh=(20, 100))
+        s_binary = hls_mask( image, thresh=(90,255), channel=2 )
+        h_binary = hls_mask( image, thresh=(20,30), channel=0 )
+        hsg_binary = np.zeros_like(gradx)
+        hsg_binary[(h_binary == 1) & (s_binary == 1) | (gradx == 1)] = 1
+        thresh_bin = np.dstack((hsg_binary, hsg_binary, hsg_binary)).astype('uint8') * 255
+
+        warped = transform_perspective(thresh_bin, 
                                        src_points=s,
                                        dest_points=d,
                                        object_points=object_points, 
