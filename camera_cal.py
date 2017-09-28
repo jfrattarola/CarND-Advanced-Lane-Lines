@@ -5,6 +5,7 @@ import glob
 import matplotlib.image as mpimg
 import matplotlib.pyplot as plt
 import os
+import ntpath
 from utils import show_images
 
 def camera_cal_init(cal_images_path):
@@ -47,6 +48,8 @@ if __name__ == '__main__':
                         help='directory to read calibration image files from')
     parser.add_argument('--debug', type=int, default=0, 
                         help='print images to screen')
+    parser.add_argument('--outputdir', type=str, default='output_images', 
+                        help='directory to write images to')
     FLAGS, unparsed = parser.parse_known_args()
 
     object_points, image_points = camera_cal_init(FLAGS.dir)
@@ -61,8 +64,11 @@ if __name__ == '__main__':
         if FLAGS.debug == 1:
             show_images(image, undistorted_image, 'Undistorted Image', 'Distorted Calibration Image')
         else:
-            cv2.imwrite('output_images/{}'.format(fname), image)
-            cv2.imwrite('output_images/{}_undistorted'.format(fname), undistorted_image)
+            head, tail = ntpath.split(fname)
+            name = tail or ntpath.basename(head)
+            print('writing {}/{}'.format(FLAGS.outputdir, name))
+            cv2.imwrite('{}/{}'.format(FLAGS.outputdir, name), image)
+            cv2.imwrite('{}/undistorted_{}'.format(FLAGS.outputdir, name), undistorted_image)
     #print test image differences
     images = glob.glob(os.path.join(FLAGS.testdir, '*.jpg'))
     for fname in images:
@@ -73,6 +79,9 @@ if __name__ == '__main__':
         if FLAGS.debug == 1:
             show_images(image, undistorted_image, 'Undistorted Image', 'Distorted Test Image')
         else:
-            cv2.imwrite('output_images/{}'.format(fname), image)
-            cv2.imwrite('output_images/{}_undistorted'.format(fname), undistorted_image)
+            head, tail = ntpath.split(fname)
+            name = tail or ntpath.basename(head)
+            print('writing {}/{}'.format(FLAGS.outputdir, name))
+            cv2.imwrite('{}/{}'.format(FLAGS.outputdir, name), image)
+            cv2.imwrite('{}/undistorted_{}'.format(FLAGS.outputdir, name), undistorted_image)
 
