@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 import argparse
 import glob
 import os
+import ntpath
 from utils import gradient_mask, hls_mask, show_images
 from camera_cal import camera_cal_init
 
@@ -40,6 +41,11 @@ if __name__ == '__main__':
                         help='directory to read calibration image files from')
     parser.add_argument('--dir', type=str, default='test_images', 
                         help='directory to read test image files from')
+    parser.add_argument('--debug', type=int, default=0, 
+                        help='print images to screen')
+    parser.add_argument('--outputdir', type=str, default='output_images', 
+                        help='directory to write images to')
+
     FLAGS, unparsed = parser.parse_known_args()
 
     #calibrate camera
@@ -65,4 +71,11 @@ if __name__ == '__main__':
                                        image_points=image_points)
         draw_lines(image, s)
         draw_lines(warped, d)
-        show_images(image, warped, 'Warped', fname)
+        if FLAGS.debug == 1:
+            show_images(image, warped, 'Warped', fname)
+        else:
+            head, tail = ntpath.split(fname)
+            name = tail or ntpath.basename(head)
+            print('writing {}/perspective_normal_{}'.format(FLAGS.outputdir, name))
+            cv2.imwrite('{}/perspective_normal_{}'.format(FLAGS.outputdir, name), cv2.cvtColor(image, cv2.COLOR_BGR2RGB))
+            cv2.imwrite('{}/perspective_warped_{}'.format(FLAGS.outputdir, name), cv2.cvtColor(warped, cv2.COLOR_BGR2RGB))

@@ -82,6 +82,6 @@ if __name__ == '__main__':
             head, tail = ntpath.split(fname)
             name = tail or ntpath.basename(head)
             print('writing {}/{}'.format(FLAGS.outputdir, name))
-            cv2.imwrite('{}/{}'.format(FLAGS.outputdir, name), image)
-            cv2.imwrite('{}/undistorted_{}'.format(FLAGS.outputdir, name), undistorted_image)
+            cv2.imwrite('{}/{}'.format(FLAGS.outputdir, name), cv2.cvtColor(image, cv2.COLOR_BGR2RGB))
+            cv2.imwrite('{}/undistorted_{}'.format(FLAGS.outputdir, name), cv2.cvtColor(undistorted_image, cv2.COLOR_BGR2RGB))
 
