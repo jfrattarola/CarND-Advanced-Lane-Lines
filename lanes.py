@@ -264,12 +264,11 @@ if __name__ == '__main__':
 
         curve_image = draw_curve(lanes)
         print('writing {}/lane_detect_{}'.format(FLAGS.outputdir, name))
-        cv2.imwrite('output_images/lane_detect_{}'.format(name), curve_image)
+        cv2.imwrite('{}/lane_detect_{}'.format(FLAGS.outputdir, name), curve_image)
 
         #get inverse perspective matrix for drawing colored lanes
         ip_matrix = cv2.getPerspectiveTransform(d, s)
 
         lane_image = draw_lane( lanes, image, warped, ip_matrix )
         print('writing {}/color_lane_{}'.format(FLAGS.outputdir, name))
-        cv2.imwrite('output_images/color_lane_{}'.format(name), cv2.cvtColor(lane_image, cv2.COLOR_BGR2RGB))
-
+        cv2.imwrite('{}/color_lane_{}'.format(FLAGS.outputdir, name), cv2.cvtColor(lane_image, cv2.COLOR_BGR2RGB))
