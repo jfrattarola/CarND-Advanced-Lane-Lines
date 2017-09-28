@@ -6,7 +6,7 @@ import argparse
 import glob
 import os
 import ntpath
-from utils import gradient_mask, hls_mask, show_images
+from utils import lane_mask, show_images
 from camera_cal import camera_cal_init
 
 def transform_perspective(image, 
@@ -34,14 +34,9 @@ def transform_perspective(image,
 
 def get_warped_binary(image_name, src_points, dest_points, object_points=None, image_points=None):
     image = mpimg.imread(image_name)
-    gradx = gradient_mask(image, orient='x', sobel_kernel=9, thresh=(20, 100))
-    s_binary = hls_mask( image, thresh=(90,255), channel=2 )
-    h_binary = hls_mask( image, thresh=(20,30), channel=0 )
-    hsg_binary = np.zeros_like(gradx)
-    hsg_binary[(h_binary == 1) | (s_binary == 1) & (gradx == 1)] = 1
-    thresh_bin = np.dstack((hsg_binary, hsg_binary, hsg_binary)).astype('uint8') * 255
+    mask = lane_mask(image)
 
-    warped = transform_perspective(thresh_bin, 
+    warped = transform_perspective(mask, 
                                    src_points,
                                    dest_points,
                                    object_points, 

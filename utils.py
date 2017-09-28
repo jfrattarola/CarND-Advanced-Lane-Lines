@@ -15,16 +15,17 @@ def show_images(orig_image, alt_image, alt_text='Alt', orig_text='Original Image
     plt.subplots_adjust(left=0., right=1, top=0.9, bottom=0.)
     plt.show()
 
-def gradient_mask(img, orient='x', sobel_kernel=3, thresh=(0, 255)):
+def gradient_mask(img, orient='x', sobel_kernel=3, thresh=(0, 255), should_gray=True):
     #set x/y params based on orient arg
     x = 1 if orient is 'x' else 0
     y = 1 if x == 0 else 0
 
     #convert to grayscale
-    gray = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
+    if should_gray is True:
+        img = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
 
     #take derivitive in x or y, given orient
-    sobel = cv2.Sobel(gray, cv2.CV_64F, x, y)
+    sobel = cv2.Sobel(img, cv2.CV_64F, x, y)
 
     #take the absolute value of the derivative
     sobel_abs = np.absolute(sobel)
@@ -79,6 +80,15 @@ def dir_threshold(image, sobel_kernel=3, thresh=(0, np.pi/2)):
 
     return dir_binary
 
+def _hls_mask(channel, thresh):
+    #convert to 8 bit (0-255)
+    scaled_S = np.uint8( 255 * channel / np.max(channel) ) if channel.dtype != 'uint8' else channel
+    
+    # 3) Return a binary image of threshold result
+    binary_output = np.zeros_like(scaled_S)
+    binary_output[(scaled_S > thresh[0]) & (scaled_S <= thresh[1])] = 1
+    return binary_output
+
 def hls_mask(img, thresh=(0, 255), channel=2):
     # 1) Convert to HLS color space
     hls = cv2.cvtColor(img, cv2.COLOR_RGB2HLS)
@@ -86,12 +96,7 @@ def hls_mask(img, thresh=(0, 255), channel=2):
     # 2) Apply a threshold to the S channel
     S = hls[:,:,channel]
 
-    #convert to 8 bit (0-255)
-    scaled_S = np.uint8( 255 * S / np.max(S) ) if S.dtype != 'uint8' else S
-    
-    # 3) Return a binary image of threshold result
-    binary_output = np.zeros_like(scaled_S)
-    binary_output[(scaled_S > thresh[0]) & (scaled_S <= thresh[1])] = 1
+    binary_output = _hls_mask( S, thresh )
 
     return binary_output
 
@@ -112,6 +117,26 @@ def combined_sgray(img, sobel_kernel=9, grad_thresh=(20,100), s_thresh=(170,255)
 
     return color_binary, combined_binary
 
+def lane_mask(img):
+    # 1) Convert to HLS color space
+    hls = cv2.cvtColor(img, cv2.COLOR_RGB2HLS)
+
+    # 2) Apply a threshold to the S channel
+    h_channel = hls[:,:,0]
+    l_channel = hls[:,:,1]
+    s_channel = hls[:,:,2]
+
+    l_output = _hls_mask( l_channel, (0,255) )
+
+    gradx = gradient_mask(l_output, orient='x', sobel_kernel=9, thresh=(20, 255), should_gray=False)
+    s_binary = _hls_mask( s_channel, thresh=(120,255))
+    l_binary = _hls_mask( l_channel, thresh=(40,255) )
+    lsg_binary = np.zeros_like(gradx)
+    
+    lsg_binary[(l_binary == 1) & (s_binary == 1) | (gradx == 1)] = 1
+    thresh_bin = np.dstack((lsg_binary, lsg_binary, lsg_binary)).astype('uint8') * 255
+
+    return thresh_bin
 
 if __name__ == '__main__':
     # Choose a Sobel kernel size

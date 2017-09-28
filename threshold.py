@@ -60,7 +60,7 @@ if __name__ == '__main__':
         show_images(image, h_binary, 'Hue (HLS)')
     hsg_channels = np.dstack((gradx, h_binary, s_binary)).astype('uint8') * 255
     hsg_binary = np.zeros_like(gradx)
-    hsg_binary[(h_binary == 1) | (s_binary == 1) & (gradx == 1)] = 1
+    hsg_binary[(s_binary == 1) | (gradx == 1) | (h_binary == 1) ] = 1
     hsg_mask = np.dstack((hsg_binary, hsg_binary, hsg_binary)).astype('uint8') * 255
     if FLAGS.debug == 1:
         show_images( hsg_channels, hsg_mask, 'HSG Mask', 'HSG Channels')
