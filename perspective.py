@@ -32,6 +32,22 @@ def transform_perspective(image,
 
     return warped_image
 
+def get_warped_binary(image_name, src_points, dest_points, object_points=None, image_points=None):
+    image = mpimg.imread(image_name)
+    gradx = gradient_mask(image, orient='x', sobel_kernel=9, thresh=(20, 100))
+    s_binary = hls_mask( image, thresh=(90,255), channel=2 )
+    h_binary = hls_mask( image, thresh=(20,30), channel=0 )
+    hsg_binary = np.zeros_like(gradx)
+    hsg_binary[(h_binary == 1) & (s_binary == 1) | (gradx == 1)] = 1
+    thresh_bin = np.dstack((hsg_binary, hsg_binary, hsg_binary)).astype('uint8') * 255
+
+    warped = transform_perspective(thresh_bin, 
+                                   src_points,
+                                   dest_points,
+                                   object_points, 
+                                   image_points)
+    return image, warped
+
 def draw_lines(image, points, color=(255,0,0)):
     cv2.polylines(image, [np.asarray(points, np.int32)], True, color, 3)
 
@@ -56,19 +72,7 @@ if __name__ == '__main__':
 
     images = glob.glob(os.path.join(FLAGS.dir, '*.jpg'))
     for fname in images:
-        image = mpimg.imread(fname)
-        gradx = gradient_mask(image, orient='x', sobel_kernel=9, thresh=(20, 100))
-        s_binary = hls_mask( image, thresh=(90,255), channel=2 )
-        h_binary = hls_mask( image, thresh=(20,30), channel=0 )
-        hsg_binary = np.zeros_like(gradx)
-        hsg_binary[(h_binary == 1) & (s_binary == 1) | (gradx == 1)] = 1
-        thresh_bin = np.dstack((hsg_binary, hsg_binary, hsg_binary)).astype('uint8') * 255
-
-        warped = transform_perspective(thresh_bin, 
-                                       src_points=s,
-                                       dest_points=d,
-                                       object_points=object_points, 
-                                       image_points=image_points)
+        image, warped = get_warped_binary( fname, s, d )
         draw_lines(image, s)
         draw_lines(warped, d)
         if FLAGS.debug == 1:

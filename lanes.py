@@ -8,7 +8,11 @@ import os
 import ntpath
 from utils import gradient_mask, hls_mask, show_images
 from camera_cal import camera_cal_init
-from perspective import transform_perspective
+from perspective import get_warped_binary
+
+class Lane:
+    def __init__(self, **kwds):
+        self.__dict__.update(kwds)
 
 def get_lanes(warped):
     # Assuming you have created a warped binary image called "binary_warped"
@@ -96,9 +100,10 @@ def get_lanes(warped):
     out_img[nonzeroy[left_lane_inds], nonzerox[left_lane_inds]] = [255, 0, 0]
     out_img[nonzeroy[right_lane_inds], nonzerox[right_lane_inds]] = [0, 0, 255]
 
-    return left_fit, right_fit, out_img
+    lanes = Lane(leftx=leftx, lefty=lefty, rightx=rightx, righty=righty, left_fit=left_fit, right_fit=right_fit, img=out_img)
+    return lanes
 
-def get_lanes_from_prev(warped, left_fit, right_fit):
+def get_lanes_from_prev(warped, lanes):
     # Assume you now have a new warped binary image
     # from the next frame of video (also called "warped")
     # It's now much easier to find line pixels!
@@ -106,13 +111,13 @@ def get_lanes_from_prev(warped, left_fit, right_fit):
     nonzeroy = np.array(nonzero[0])
     nonzerox = np.array(nonzero[1])
     margin = 100
-    left_lane_inds = ((nonzerox > (left_fit[0]*(nonzeroy**2) + left_fit[1]*nonzeroy +
-    left_fit[2] - margin)) & (nonzerox < (left_fit[0]*(nonzeroy**2) +
-    left_fit[1]*nonzeroy + left_fit[2] + margin)))
+    left_lane_inds = ((nonzerox > (lanes.left_fit[0]*(nonzeroy**2) + lanes.left_fit[1]*nonzeroy +
+    lanes.left_fit[2] - margin)) & (nonzerox < (lanes.left_fit[0]*(nonzeroy**2) +
+    lanes.left_fit[1]*nonzeroy + lanes.left_fit[2] + margin)))
 
-    right_lane_inds = ((nonzerox > (right_fit[0]*(nonzeroy**2) + right_fit[1]*nonzeroy +
-    right_fit[2] - margin)) & (nonzerox < (right_fit[0]*(nonzeroy**2) +
-    right_fit[1]*nonzeroy + right_fit[2] + margin)))
+    right_lane_inds = ((nonzerox > (lanes.right_fit[0]*(nonzeroy**2) + lanes.right_fit[1]*nonzeroy +
+    lanes.right_fit[2] - margin)) & (nonzerox < (lanes.right_fit[0]*(nonzeroy**2) +
+    lanes.right_fit[1]*nonzeroy + lanes.right_fit[2] + margin)))
 
     # Again, extract left and right line pixel positions
     leftx = nonzerox[left_lane_inds]
@@ -124,7 +129,8 @@ def get_lanes_from_prev(warped, left_fit, right_fit):
     left_fit = np.polyfit(lefty, leftx, 2)
     right_fit = np.polyfit(righty, rightx, 2)
 
-    return left_fit, right_fit
+    lanes = Lane(leftx=leftx, lefty=lefty, rightx=rightx, righty=righty, left_fit=left_fit, right_fit=right_fit, img=lanes.img)
+    return lanes
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -132,8 +138,6 @@ if __name__ == '__main__':
                         help='directory to read calibration image files from')
     parser.add_argument('--dir', type=str, default='test_images', 
                         help='directory to read test image files from')
-    parser.add_argument('--debug', type=int, default=0, 
-                        help='print images to screen')
     parser.add_argument('--outputdir', type=str, default='output_images', 
                         help='directory to write images to')
     FLAGS, unparsed = parser.parse_known_args()
@@ -146,40 +150,28 @@ if __name__ == '__main__':
 
     images = glob.glob(os.path.join(FLAGS.dir, '*.jpg'))
     for fname in images:
-        image = mpimg.imread(fname)
-        gradx = gradient_mask(image, orient='x', sobel_kernel=9, thresh=(20, 100))
-        s_binary = hls_mask( image, thresh=(90,255), channel=2 )
-        h_binary = hls_mask( image, thresh=(20,30), channel=0 )
-        hsg_binary = np.zeros_like(gradx)
-        hsg_binary[(h_binary == 1) & (s_binary == 1) | (gradx == 1)] = 1
-        thresh_bin = np.dstack((hsg_binary, hsg_binary, hsg_binary)).astype('uint8') * 255
-
-        warped = transform_perspective(thresh_bin, 
-                                       src_points=s,
-                                       dest_points=d,
-                                       object_points=object_points, 
-                                       image_points=image_points)
+        image, warped = get_warped_binary(fname, s, d, object_points, image_points)
 
         # first we do full search
-        left_fit, right_fit, out_img = get_lanes(warped)
+        lanes = get_lanes(warped)
 
         # use data from previous frame
-        left_fit, right_fit = get_lanes_from_prev(warped, left_fit, right_fit)
+        lanes = get_lanes_from_prev(warped, lanes)
 
         # get x and y plot values
         ploty = np.linspace(0, warped.shape[0]-1, warped.shape[0] )
-        left_fitx = left_fit[0]*ploty**2 + left_fit[1]*ploty + left_fit[2]
-        right_fitx = right_fit[0]*ploty**2 + right_fit[1]*ploty + right_fit[2]
+        left_fitx = lanes.left_fit[0]*ploty**2 + lanes.left_fit[1]*ploty + lanes.left_fit[2]
+        right_fitx = lanes.right_fit[0]*ploty**2 + lanes.right_fit[1]*ploty + lanes.right_fit[2]
 
         # draw curve
         left_lane_dots = zip(list(ploty), list(left_fitx))
         right_lane_dots = zip(list(ploty), list(right_fitx))
         for l in list(left_lane_dots):
-            cv2.circle(out_img, (int(l[1]), int(l[0])), 2, (0, 255, 255))
+            cv2.circle(lanes.img, (int(l[1]), int(l[0])), 2, (0, 255, 255))
         for r in list(right_lane_dots):
-            cv2.circle(out_img, (int(r[1]), int(r[0])), 2, (0, 255, 255))
+            cv2.circle(lanes.img, (int(r[1]), int(r[0])), 2, (0, 255, 255))
 
         head, tail = ntpath.split(fname)
         name = tail or ntpath.basename(head)
         print('writing {}/lane_detect_{}'.format(FLAGS.outputdir, name))
-        cv2.imwrite('output_images/lane_detect_{}'.format(name), out_img)
+        cv2.imwrite('output_images/lane_detect_{}'.format(name), lanes.img)
