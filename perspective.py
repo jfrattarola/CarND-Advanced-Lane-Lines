@@ -10,10 +10,11 @@ from utils import show_images
 from threshold import lane_mask
 from camera_cal import Camera
 
-SRC=np.float32([[685, 450], [1075, 705], [230, 705], [600, 450]])
-DEST=np.float32([[960, 0], [960, 720], [320, 720], [320, 0]])
 
 class Transform:
+    DEFAULT_SRC=np.float32([[685, 450], [1075, 705], [230, 705], [600, 450]])
+    DEFAULT_DEST=np.float32([[960, 0], [960, 720], [320, 720], [320, 0]])
+
     def __init__(self, camera, src_points, dest_points):
         self.camera = camera
         self.src = src_points
@@ -56,7 +57,7 @@ if __name__ == '__main__':
     FLAGS, unparsed = parser.parse_known_args()
 
     camera = Camera(FLAGS.caldir)
-    transform = Transform(camera, SRC, DEST)
+    transform = Transform(camera, Transform.DEFAULT_SRC, Transform.DEFAULT_DEST)
 
     images = glob.glob(os.path.join(FLAGS.dir, '*.jpg'))
     for fname in images:

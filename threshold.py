@@ -24,7 +24,7 @@ def gradient_mask(img, orient='x', sobel_kernel=3, thresh=(0, 255), should_gray=
     sobel_abs = np.absolute(sobel)
 
     #scale to 8-bit (0-255) and convert to uint8
-    scaled_sobel = np.uint8(255 * sobel_abs / np.max(sobel_abs))
+    scaled_sobel = np.uint8(255 * sobel_abs / np.max(sobel_abs)) if sobel_abs.dtype != 'uint8' else sobel_abs
 
     #create a mask when the scaled gradient (derivative) is between the min/max thresholds
     grad_binary = np.zeros_like(scaled_sobel)
