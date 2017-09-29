@@ -20,6 +20,12 @@ class Transform:
         self.src = src_points
         self.dst = dest_points
 
+    def get_perspective_matrix(self):
+        return cv2.getPerspectiveTransform(self.src, self.dst)
+
+    def get_inverse_perspective_matrix(self):
+        return cv2.getPerspectiveTransform(self.dst, self.src)
+
     def birdseye(self, image, thresh=True):
         #get undistorted image
         undistorted_image = self.camera.undistort(image)
@@ -31,7 +37,7 @@ class Transform:
             img, _ = lane_mask(undistorted_image)
 
         #get perspective transform matrix
-        perspective_transform = cv2.getPerspectiveTransform(self.src, self.dst)
+        perspective_transform = self.get_perspective_matrix()
 
         #warp image
         img_size = (img.shape[1], img.shape[0])

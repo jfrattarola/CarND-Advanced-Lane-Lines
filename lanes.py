@@ -26,6 +26,13 @@ class Lane:
         self.nwindows=9        # Choose the number of sliding windows
         self.margin = 100 # Set the width of the windows +/- margin
         self.minpix = 50 # Set minimum number of pixels found to re-center window
+        self.left_curverad=None
+        self.right_curverad=None 
+        self.left_curverad_pixels=None
+        self.right_curverad_pixels=None 
+        self.center_offset_meters=None 
+        self.center_offset_pixels=None
+
         # Assuming you have created a warped binary image called "binary_warped"
         # Take a histogram of the bottom half of the image
         histogram = np.sum(image[int(image.shape[0]/2):, :, 0], axis=0)
@@ -146,84 +153,83 @@ class Lane:
             cv2.circle(out_img, (int(r[1]), int(r[0])), 2, (0, 255, 255))
 
         return out_img
-"""
-def get_curves_and_offset(lanes, img):
-    ploty = np.linspace(0, img.shape[0]-1, img.shape[0])
-    y_eval = np.max(ploty)
 
-    # Generate points
-    left_fitx = lanes.left_fit[0]*ploty**2 + lanes.left_fit[1]*ploty + lanes.left_fit[2]
-    right_fitx = lanes.right_fit[0]*ploty**2 + lanes.right_fit[1]*ploty + lanes.right_fit[2]
+    def get_curves_and_offset(self):
+        ploty = np.linspace(0, self.img.shape[0]-1, self.img.shape[0])
+        y_eval = np.max(ploty)
+        
+        # Generate points
+        left_fitx = self.left_fit[0]*ploty**2 + self.left_fit[1]*ploty + self.left_fit[2]
+        right_fitx = self.right_fit[0]*ploty**2 + self.right_fit[1]*ploty + self.right_fit[2]
 
-    # Define conversions in x and y from pixels space to meters
-    ym_per_pix = 30/720 # meters per pixel in y dimension
-    xm_per_pix = 3.7/700 # meters per pixel in x dimension
+        # Define conversions in x and y from pixels space to meters
+        ym_per_pix = 30/720 # meters per pixel in y dimension
+        xm_per_pix = 3.7/700 # meters per pixel in x dimension
 
-    # Fit new polynomials to x,y in world space
-    left_fit_cr = np.polyfit(lanes.lefty*ym_per_pix, lanes.leftx*xm_per_pix, 2)
-    right_fit_cr = np.polyfit(lanes.righty*ym_per_pix, lanes.rightx*xm_per_pix, 2)
+        # Fit new polynomials to x,y in world space
+        left_fit_cr = np.polyfit(self.lefty*ym_per_pix, self.leftx*xm_per_pix, 2)
+        right_fit_cr = np.polyfit(self.righty*ym_per_pix, self.rightx*xm_per_pix, 2)
 
-    # Calculate the new radii of curvature
-    left_curverad = ((1 + (2*left_fit_cr[0]*y_eval*ym_per_pix + left_fit_cr[1])**2)**1.5) / np.absolute(2*left_fit_cr[0])
-    right_curverad = ((1 + (2*right_fit_cr[0]*y_eval*ym_per_pix + right_fit_cr[1])**2)**1.5) / np.absolute(2*right_fit_cr[0])
+        # Calculate the new radii of curvature
+        self.left_curverad = ((1 + (2*left_fit_cr[0]*y_eval*ym_per_pix + left_fit_cr[1])**2)**1.5) / np.absolute(2*left_fit_cr[0])
+        self.right_curverad = ((1 + (2*right_fit_cr[0]*y_eval*ym_per_pix + right_fit_cr[1])**2)**1.5) / np.absolute(2*right_fit_cr[0])
 
-    # Calcualate vehicle offset
-    camera_position = img.shape[1] / 2.
-    lane_center = (right_fitx[-1] + left_fitx[-1]) / 2.
-    center_offset_pixels = camera_position - lane_center
-    center_offset_meters = xm_per_pix * center_offset_pixels
-
-    return left_curverad, right_curverad, center_offset_meters, center_offset_pixels
-
-def get_curves_in_pixels(lanes, img):
-    ploty = np.linspace(0, img.shape[0]-1, img.shape[0])
-    y_eval = np.max(ploty)
-
-    # Calculate the new radii of curvature
-    left_curverad_pixels = ((1 + (2*lanes.left_fit[0]*y_eval + lanes.left_fit[1])**2)**1.5) / np.absolute(2*lanes.left_fit[0])
-    right_curverad_pixels = ((1 + (2*lanes.right_fit[0]*y_eval + lanes.right_fit[1])**2)**1.5) / np.absolute(2*lanes.right_fit[0])
-
-    return left_curverad_pixels, right_curverad_pixels
+        # Calcualate vehicle offset
+        camera_position = self.img.shape[1] / 2.
+        lane_center = (right_fitx[-1] + left_fitx[-1]) / 2.
+        self.center_offset_pixels = camera_position - lane_center
+        self.center_offset_meters = xm_per_pix * self.center_offset_pixels
 
 
-def draw_lane(lanes, img, warped, ip_matrix):
-    left_curverad, right_curverad, center_offset_meters, _ = get_curves_and_offset(lanes, warped)
+    def get_curves_in_pixels(self):
+        ploty = np.linspace(0, self.img.shape[0]-1, self.img.shape[0])
+        y_eval = np.max(ploty)
 
-    # Generate x and y values for plotting
-    ploty = np.linspace(0, warped.shape[0]-1, warped.shape[0] )
-    left_fitx = lanes.left_fit[0]*ploty**2 + lanes.left_fit[1]*ploty + lanes.left_fit[2]
-    right_fitx = lanes.right_fit[0]*ploty**2 + lanes.right_fit[1]*ploty + lanes.right_fit[2]
+        # Calculate the new radii of curvature
+        self.left_curverad_pixels = ((1 + (2*lanes.left_fit[0]*y_eval + lanes.left_fit[1])**2)**1.5) / np.absolute(2*lanes.left_fit[0])
+        self.right_curverad_pixels = ((1 + (2*lanes.right_fit[0]*y_eval + lanes.right_fit[1])**2)**1.5) / np.absolute(2*lanes.right_fit[0])
 
-    # Create an image to draw the lines on
-    draw_img = np.zeros_like(warped).astype(np.uint8)
 
-    # Recast the x and y points into usable format for cv2.fillPoly()
-    pts_left = np.array([np.transpose(np.vstack([left_fitx, ploty]))])
-    pts_right = np.array([np.flipud(np.transpose(np.vstack([right_fitx, ploty])))])
-    pts = np.hstack((pts_left, pts_right))
 
-    # Draw the lane onto the warped blank image
-    cv2.fillPoly(draw_img, np.int_([pts]), (0,255, 0))
+    def draw_lane(self, img):
+        self.get_curves_and_offset()
 
-    # Warp the blank back to original image space using inverse perspective matrix
-    new_warped = cv2.warpPerspective(draw_img, ip_matrix, (draw_img.shape[1], draw_img.shape[0]))
+        # Generate x and y values for plotting
+        ploty = np.linspace(0, warped.shape[0]-1, warped.shape[0] )
+        left_fitx = self.left_fit[0]*ploty**2 + self.left_fit[1]*ploty + self.left_fit[2]
+        right_fitx = self.right_fit[0]*ploty**2 + self.right_fit[1]*ploty + self.right_fit[2]
 
-    # Combine the result with the original image
-    out_img = cv2.addWeighted(img, 1, new_warped, 0.3, 0)
+        # Create an image to draw the lines on
+        draw_img = np.zeros_like(img).astype(np.uint8)
 
-    # Add info about radius and offset
-    font = cv2.FONT_HERSHEY_DUPLEX
-    text1 = 'left_curverad {:5.2f} meters - right_curverad: {:5.2f}'.format(left_curverad, right_curverad)
-    if center_offset_meters < 0:
-        text2 = 'offset: {:2.3f} meters to the left'.format(abs(center_offset_meters))
-    else:
-        text2 = 'offset: {:2.3f} meters to the right'.format(abs(center_offset_meters))
+        # Recast the x and y points into usable format for cv2.fillPoly()
+        pts_left = np.array([np.transpose(np.vstack([left_fitx, ploty]))])
+        pts_right = np.array([np.flipud(np.transpose(np.vstack([right_fitx, ploty])))])
+        pts = np.hstack((pts_left, pts_right))
 
-    cv2.putText(out_img, text1, (50, 30), font, 1, (0,0,255), 1, cv2.LINE_AA)
-    cv2.putText(out_img, text2, (50, 70), font, 1, (0,0,255), 1, cv2.LINE_AA)
+        # Draw the lane onto the warped blank image
+        cv2.fillPoly(draw_img, np.int_([pts]), (0,255, 0))
 
-    return out_img
-"""
+        # Warp the blank back to original image space using inverse perspective matrix
+        ip_matrix = self.transform.get_inverse_perspective_matrix()
+        new_warped = cv2.warpPerspective(draw_img, ip_matrix, (img.shape[1], img.shape[0]))
+
+        # Combine the result with the original image
+        out_img = cv2.addWeighted(img, 1, new_warped, 0.3, 0)
+
+        # Add info about radius and offset
+        font = cv2.FONT_HERSHEY_DUPLEX
+        text1 = 'left_curverad {:5.2f} meters - right_curverad: {:5.2f}'.format(self.left_curverad, self.right_curverad)
+        if self.center_offset_meters < 0:
+            text2 = 'offset: {:2.3f} meters to the left'.format(abs(self.center_offset_meters))
+        else:
+            text2 = 'offset: {:2.3f} meters to the right'.format(abs(self.center_offset_meters))
+
+        cv2.putText(out_img, text1, (50, 30), font, 1, (0,0,255), 1, cv2.LINE_AA)
+        cv2.putText(out_img, text2, (50, 70), font, 1, (0,0,255), 1, cv2.LINE_AA)
+
+        return out_img
+
 
 
 if __name__ == '__main__':
@@ -262,9 +268,9 @@ if __name__ == '__main__':
             print('writing {}/lane_detect_{}'.format(FLAGS.outputdir, name))
             cv2.imwrite('{}/lane_detect_{}'.format(FLAGS.outputdir, name), curve_image)
 
-        #get inverse perspective matrix for drawing colored lane
-#        ip_matrix = cv2.getPerspectiveTransform(d, s)
-
-#        lane_image = draw_lane( lane, image, warped, ip_matrix )
-#        print('writing {}/color_lane_{}'.format(FLAGS.outputdir, name))
-#        cv2.imwrite('{}/color_lane_{}'.format(FLAGS.outputdir, name), cv2.cvtColor(lane_image, cv2.COLOR_BGR2RGB))
+        lane_image = lane.draw_lane( image )
+        if FLAGS.debug == 1:
+            show_images(image, lane_image)
+        else :
+            print('writing {}/color_lane_{}'.format(FLAGS.outputdir, name))
+            cv2.imwrite('{}/color_lane_{}'.format(FLAGS.outputdir, name), cv2.cvtColor(lane_image, cv2.COLOR_BGR2RGB))
