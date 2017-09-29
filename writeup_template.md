@@ -22,6 +22,7 @@ The goals / steps of this project are the following:
 [straight]: ./examples/straight_lines1.jpg "Straight undistorted with src lines"
 [warped]: ./examples/warped_straight_lines1.jpg "Warped undistorted with dest lines"
 [thresh_warped]: ./examples/perspective_thresh_warped.jpg "Masked image with perspective transform"
+[lanes]: ./examples/lanes.png "Colored/Curved lane lines"
 [video1]: ./project_video.mp4 "Video"
 
 ## [Rubric](https://review.udacity.com/#!/rubrics/571/view) Points
@@ -89,15 +90,19 @@ I verified that my perspective transform was working as expected by drawing the 
 
 ![warped][warped]
 
+Here, I apply the method to a threshold/masked binary image
+
 ![thresh_mask][thresh_mask]
 
 ![thresh_warped][thresh_warped]
 
 #### 4. Describe how (and identify where in your code) you identified lane-line pixels and fit their positions with a polynomial?
 
-Then I did some other stuff and fit my lane lines with a 2nd order polynomial kinda like this:
+Then I found the pixels in each lane from the birdseye view.  The code is found in `lanes.py` class Lane, init function and advance_next_lane, which is the optimized non-full-search function given in the lesson.
 
-![alt text][image5]
+I drew curved lines and colored the lane lines from the mask using numpy's polyfit method. Example:
+
+![lanes][lanes]
 
 #### 5. Describe how (and identify where in your code) you calculated the radius of curvature of the lane and the position of the vehicle with respect to center.
 
