@@ -112,10 +112,10 @@ This is done in `lanes.py` in the Lane class function `get_curves_and_offset()`,
 The offset of the car from the road's center assumes the camera is mounted in the middle of the car. We find the distance of the two lanes via: 
 ```python
 camera_position = self.img.shape[1] / 2.                                                                                  
-        lane_center = (right_fitx[-1] + left_fitx[-1]) / 2.                                                                       
-        self.center_offset_pixels = camera_position - lane_center                                                                 
-        self.center_offset_meters = xm_per_pix * center_offset_pixels 
-        ```
+lane_center = (right_fitx[-1] + left_fitx[-1]) / 2.                                                                       
+self.center_offset_pixels = camera_position - lane_center                                                                 
+self.center_offset_meters = xm_per_pix * center_offset_pixels 
+```
         
 #### 6. Provide an example image of your result plotted back down onto the road such that the lane area is identified clearly.
 
