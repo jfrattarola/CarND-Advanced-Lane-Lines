@@ -15,8 +15,8 @@ The goals / steps of this project are the following:
 
 [dist_img]: ./examples/distort_output.jpg "Distorted"
 [undist_img]: ./examples/undistort_output.jpg "Undistorted"
-[dist_cars]: ./test_images/distorted_cars.jpg "Distorted Cars"
-[undist_cars]: ./test_images/undistorted_cars.jpg "Undistorted Cars"
+[dist_cars]: ./examples/distorted_cars.jpg "Distorted Cars"
+[undist_cars]: ./examples/undistorted_cars.jpg "Undistorted Cars"
 [video1]: ./project_video.mp4 "Video"
 
 ## [Rubric](https://review.udacity.com/#!/rubrics/571/view) Points
