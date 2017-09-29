@@ -17,11 +17,15 @@ The goals / steps of this project are the following:
 [undist_img]: ./examples/undistort_output.jpg "Undistorted"
 [dist_cars]: ./examples/distorted_cars.jpg "Distorted Cars"
 [undist_cars]: ./examples/undistorted_cars.jpg "Undistorted Cars"
+[thresh_channels]: ./examples/thresh_channels.jpg "Threshold Channels Binary"
+[thresh_mask]: ./examples/thresh_mask.jpg "Threshold Mask Binary"
 [video1]: ./project_video.mp4 "Video"
 
 ## [Rubric](https://review.udacity.com/#!/rubrics/571/view) Points
 
 ### Here I will consider the rubric points individually and describe how I addressed each point in my implementation.  
+
+Aside from images displayed, I ran tests on all images in `test_images/`, placing the output in `output_images/`
 
 ### Camera Calibration
 
@@ -57,9 +61,15 @@ To demonstrate this step, I will describe how I apply the distortion correction 
 
 #### 2. Describe how (and identify where in your code) you used color transforms, gradients or other methods to create a thresholded binary image.  Provide an example of a binary image result.
 
-I used a combination of color and gradient thresholds to generate a binary image (thresholding steps at lines # through # in `another_file.py`).  Here's an example of my output for this step.  (note: this is not actually from one of the test images)
+I used a combination of gradient and color thresholds to generate a binary image. The function I used in the end is found in `threshold.py`, called `lane_mask()`.  Instead of grayscaling the image for the Sobel operator, I used the L channel from HSL along the x axis.
 
-![alt text][image3]
+#### Colorized Threshold Binary
+
+![threshold binary][thresh_channels]
+
+#### Threshold Mask Binary
+
+![threshold_mask][thresh_mask]
 
 #### 3. Describe how (and identify where in your code) you performed a perspective transform and provide an example of a transformed image.
 
