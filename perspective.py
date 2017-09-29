@@ -6,42 +6,38 @@ import argparse
 import glob
 import os
 import ntpath
-from utils import lane_mask, show_images
-from camera_cal import camera_cal_init
+from utils import show_images
+from threshold import lane_mask
+from camera_cal import Camera
 
-def transform_perspective(image, 
-                          src_points,
-                          dest_points,
-                          object_points=None, 
-                          image_points=None):
-    if object_points == None or image_points == None:
-        object_points, image_points = camera_cal_init(FLAGS.caldir)
+SRC=np.float32([[685, 450], [1075, 705], [230, 705], [600, 450]])
+DEST=np.float32([[960, 0], [960, 720], [320, 720], [320, 0]])
 
-    #calibrate camera
-    image_size = (image.shape[1], image.shape[0])
-    ret, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(object_points, image_points, image_size, None ,None)
-    
-    #get undistorted image
-    undistorted_image = cv2.undistort(image, mtx, dist, None, mtx)
+class Transform:
+    def __init__(self, camera, src_points, dest_points):
+        self.camera = camera
+        self.src = src_points
+        self.dst = dest_points
 
-    #get perspective transform matrix
-    perspective_transform = cv2.getPerspectiveTransform(src_points, dest_points)
+    def birdseye(self, image, thresh=True):
+        #get undistorted image
+        undistorted_image = self.camera.undistort(image)
 
-    #warp image
-    warped_image = cv2.warpPerspective(undistorted_image.copy(), perspective_transform, image_size, flags=cv2.INTER_LINEAR)
+        img = undistorted_image
 
-    return undistorted_image, warped_image
+        # get mask
+        if thresh is True:
+            img, _ = lane_mask(undistorted_image)
 
-def get_warped_binary(image_name, src_points, dest_points, object_points=None, image_points=None):
-    image = mpimg.imread(image_name)
-    mask = lane_mask(image)
+        #get perspective transform matrix
+        perspective_transform = cv2.getPerspectiveTransform(self.src, self.dst)
 
-    undistorted_image, warped = transform_perspective(mask, 
-                                                      src_points,
-                                                      dest_points,
-                                                      object_points, 
-                                                      image_points)
-    return image, warped
+        #warp image
+        img_size = (img.shape[1], img.shape[0])
+        warped = cv2.warpPerspective(img, perspective_transform, img_size, flags=cv2.INTER_LINEAR)
+
+        return warped, img
+
 
 def draw_lines(image, points, color=(255,0,0)):
     cv2.polylines(image, [np.asarray(points, np.int32)], True, color, 3)
@@ -59,22 +55,33 @@ if __name__ == '__main__':
 
     FLAGS, unparsed = parser.parse_known_args()
 
-    #calibrate camera
-    object_points, image_points = camera_cal_init(FLAGS.caldir)
-
-    s = np.float32([[685, 450], [1075, 705], [230, 705], [600, 450]])
-    d = np.float32([[960, 0], [960, 720], [320, 720], [320, 0]])
+    camera = Camera(FLAGS.caldir)
+    transform = Transform(camera, SRC, DEST)
 
     images = glob.glob(os.path.join(FLAGS.dir, '*.jpg'))
     for fname in images:
-        image, warped = get_warped_binary( fname, s, d )
-        draw_lines(image, s)
-        draw_lines(warped, d)
+        image = mpimg.imread(fname)
+        thresh_image = image.copy()
+
+        warped, undist = transform.birdseye(image, False)
+
+        draw_lines(undist, transform.src)
+        draw_lines(warped, transform.dst)
+
+        thresh_warped, mask = transform.birdseye(thresh_image)
+
         if FLAGS.debug == 1:
-            show_images(image, warped, 'Warped', fname)
+            show_images(undist, warped, 'Warped', fname)
+            show_images(mask, thresh_warped, 'Warped', fname)
         else:
             head, tail = ntpath.split(fname)
             name = tail or ntpath.basename(head)
             print('writing {}/perspective_normal_{}'.format(FLAGS.outputdir, name))
-            cv2.imwrite('{}/perspective_normal_{}'.format(FLAGS.outputdir, name), cv2.cvtColor(image, cv2.COLOR_BGR2RGB))
+            cv2.imwrite('{}/perspective_normal_{}'.format(FLAGS.outputdir, name), cv2.cvtColor(undist, cv2.COLOR_BGR2RGB))
+            print('writing {}/perspective_warped_{}'.format(FLAGS.outputdir, name))
             cv2.imwrite('{}/perspective_warped_{}'.format(FLAGS.outputdir, name), cv2.cvtColor(warped, cv2.COLOR_BGR2RGB))
+
+            print('writing {}/perspective_thresh_{}'.format(FLAGS.outputdir, name))
+            cv2.imwrite('{}/perspective_thresh_{}'.format(FLAGS.outputdir, name), cv2.cvtColor(mask, cv2.COLOR_BGR2RGB))
+            print('writing {}/perspective_normal_{}'.format(FLAGS.outputdir, name))
+            cv2.imwrite('{}/perspective_thresh_warped_{}'.format(FLAGS.outputdir, name), cv2.cvtColor(thresh_warped, cv2.COLOR_BGR2RGB))

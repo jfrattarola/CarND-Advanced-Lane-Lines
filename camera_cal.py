@@ -13,6 +13,7 @@ class Camera:
         self.cal_path=cal_images_path
         self.objp=[]
         self.imgp=[]
+        self._image_size=None
 
         #create object points for each intersection on the chessboard
         objp = np.zeros((6*9,3), np.float32)
@@ -40,22 +41,22 @@ class Camera:
                 print('ERROR reading {}'.format(fname))
 
     def image_size(self):
-        return 0 if self.image_size is None else self.image_size
+        return (0,0) if self._image_size is None else self._image_size
 
     def calibrate(self):
         ret = 0
-        if self.image_size is not None:
-            self.ret, self.mtx, self.dist, self.rvecs, self.tvecs = cv2.calibrateCamera(self.objp, self.imgp, self.image_size, None ,None)
+        if self._image_size is not None:
+            self.ret, self.mtx, self.dist, self.rvecs, self.tvecs = cv2.calibrateCamera(self.objp, self.imgp, self._image_size, None ,None)
             ret = 1
         return ret
 
     def undistort(self, image):
         image_size = (image.shape[1], image.shape[0])
-        ret = 0 if self.image_size != image_size else 1
+        ret = 0 if self._image_size != image_size else 1
 
         if ret == 0:
-            self.image_size = image_size
-            ret = camera.calibrate()
+            self._image_size = image_size
+            ret = self.calibrate()
         undistort = None
         if ret == 1:
             undistort = cv2.undistort(image, self.mtx, self.dist, None, self.mtx)
