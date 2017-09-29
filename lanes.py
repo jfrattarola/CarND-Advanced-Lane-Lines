@@ -12,16 +12,20 @@ from perspective import Transform
 
 class Lane:
 
-    def __init__(self, camera, transform, image):
+    def __init__(self, camera, transform, image, alpha=0.1, beta=0.9):
         self.camera = camera
         self.transform = transform
         self.img = image
+        self.alpha = alpha
+        self.beta = beta
         self.leftx=None
         self.lefty=None
         self.rightx=None
         self.righty=None
         self.left_fit=None
         self.right_fit=None
+        self.prev_left_fit=None
+        self.prev_right_fit=None
         self.out_img=None
         self.nwindows=9        # Choose the number of sliding windows
         self.margin = 100 # Set the width of the windows +/- margin
@@ -31,6 +35,7 @@ class Lane:
         self.left_curverad_pixels=None
         self.right_curverad_pixels=None 
         self.center_offset_meters=None 
+        self.prev_center_offset_pixels=None
         self.center_offset_pixels=None
 
         # Assuming you have created a warped binary image called "binary_warped"
@@ -50,7 +55,7 @@ class Lane:
         window_height = np.int(image.shape[0]/self.nwindows)
 
         # Identify the x and y positions of all nonzero pixels in the image
-        nonzero = warped.nonzero()
+        nonzero = self.img.nonzero()
         nonzeroy = np.array(nonzero[0])
         nonzerox = np.array(nonzero[1])
 
@@ -65,8 +70,8 @@ class Lane:
         # Step through the windows one by one
         for window in range(self.nwindows):
             # Identify window boundaries in x and y (and right and left)
-            win_y_low = warped.shape[0] - (window+1) * window_height
-            win_y_high = warped.shape[0] - window * window_height
+            win_y_low = self.img.shape[0] - (window+1) * window_height
+            win_y_high = self.img.shape[0] - window * window_height
             win_xleft_low = leftx_current - self.margin
             win_xleft_high = leftx_current + self.margin
             win_xright_low = rightx_current - self.margin
@@ -110,7 +115,7 @@ class Lane:
         self.out_img[nonzeroy[left_lane_inds], nonzerox[left_lane_inds]] = [255, 0, 0]
         self.out_img[nonzeroy[right_lane_inds], nonzerox[right_lane_inds]] = [0, 0, 255]
 
-    def advance_next_lane(self, image):
+    def advance_next_lane(self, image, smooth=True):
         # Assume you now have a new warped binary image
         # from the next frame of video (also called "warped")
         # It's now much easier to find line pixels!
@@ -133,14 +138,21 @@ class Lane:
         self.righty = nonzeroy[right_lane_inds]
 
         # Fit a second order polynomial to each
+        self.prev_left_fit = self.left_fit
+        self.prev_right_fit = self.right_fit
         self.left_fit = np.polyfit(self.lefty, self.leftx, 2)
         self.right_fit = np.polyfit(self.righty, self.rightx, 2)
-        
+
+        if smooth is True:
+            self.left_fit = self.alpha * self.prev_left_fit + self.beta * self.left_fit
+            self.right_fit = self.alpha * self.prev_right_fit + self.beta * self.right_fit
+            
+
     def draw_curve(self):
         out_img = self.out_img.copy()
 
         # get x and y plot values
-        ploty = np.linspace(0, warped.shape[0]-1, warped.shape[0] )
+        ploty = np.linspace(0, self.img.shape[0]-1, self.img.shape[0] )
         left_fitx = self.left_fit[0]*ploty**2 + self.left_fit[1]*ploty + self.left_fit[2]
         right_fitx = self.right_fit[0]*ploty**2 + self.right_fit[1]*ploty + self.right_fit[2]
 
@@ -195,7 +207,7 @@ class Lane:
         self.get_curves_and_offset()
 
         # Generate x and y values for plotting
-        ploty = np.linspace(0, warped.shape[0]-1, warped.shape[0] )
+        ploty = np.linspace(0, self.img.shape[0]-1, self.img.shape[0] )
         left_fitx = self.left_fit[0]*ploty**2 + self.left_fit[1]*ploty + self.left_fit[2]
         right_fitx = self.right_fit[0]*ploty**2 + self.right_fit[1]*ploty + self.right_fit[2]
 
