@@ -28,19 +28,19 @@ def transform_perspective(image,
     perspective_transform = cv2.getPerspectiveTransform(src_points, dest_points)
 
     #warp image
-    warped_image = cv2.warpPerspective(image, perspective_transform, image_size, flags=cv2.INTER_LINEAR)
+    warped_image = cv2.warpPerspective(undistorted_image.copy(), perspective_transform, image_size, flags=cv2.INTER_LINEAR)
 
-    return warped_image
+    return undistorted_image, warped_image
 
 def get_warped_binary(image_name, src_points, dest_points, object_points=None, image_points=None):
     image = mpimg.imread(image_name)
     mask = lane_mask(image)
 
-    warped = transform_perspective(mask, 
-                                   src_points,
-                                   dest_points,
-                                   object_points, 
-                                   image_points)
+    undistorted_image, warped = transform_perspective(mask, 
+                                                      src_points,
+                                                      dest_points,
+                                                      object_points, 
+                                                      image_points)
     return image, warped
 
 def draw_lines(image, points, color=(255,0,0)):
