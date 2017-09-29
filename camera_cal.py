@@ -8,37 +8,58 @@ import os
 import ntpath
 from utils import show_images
 
-def camera_cal_init(cal_images_path):
-    object_points=[]
-    image_points=[]
+class Camera:    
+    def __init__(self, cal_images_path):
+        self.cal_path=cal_images_path
+        self.objp=[]
+        self.imgp=[]
 
-    #create object points for each intersection on the chessboard
-    objp = np.zeros((6*9,3), np.float32)
-    objp[:,:2] = np.mgrid[0:9,0:6].T.reshape(-1,2)
+        #create object points for each intersection on the chessboard
+        objp = np.zeros((6*9,3), np.float32)
+        objp[:,:2] = np.mgrid[0:9,0:6].T.reshape(-1,2)
 
-    #import all images
-    images = glob.glob(os.path.join(cal_images_path, '*.jpg'))
+        #import all images
+        images = glob.glob(os.path.join(cal_images_path, '*.jpg'))
 
-    #iterate over images to get corner and image points
-    for fname in images:
-        #read in and convert to grayscale
-        image = mpimg.imread(fname)
+        #iterate over images to get corner and image points
+        for fname in images:
+            #read in and convert to grayscale
+            image = mpimg.imread(fname)
         
-        #Convert image to grayscale
-        gray = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
+            #Convert image to grayscale
+            gray = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
 
-        #find the corners
-        ret, corners = cv2.findChessboardCorners( gray, (9,6), None)
+            #find the corners
+            ret, corners = cv2.findChessboardCorners( gray, (9,6), None)
 
-        #if corners are found, add them to the image and object points array
-        if ret == True:
-            image_points.append(corners)
-            object_points.append(objp)
-        else:
-            print('ERROR reading {}'.format(fname))
+            #if corners are found, add them to the image and object points array
+            if ret == True:
+                self.imgp.append(corners)
+                self.objp.append(objp)
+            else:
+                print('ERROR reading {}'.format(fname))
 
-    return object_points, image_points
+    def image_size(self):
+        return 0 if self.image_size is None else self.image_size
 
+    def calibrate(self):
+        ret = 0
+        if self.image_size is not None:
+            self.ret, self.mtx, self.dist, self.rvecs, self.tvecs = cv2.calibrateCamera(self.objp, self.imgp, self.image_size, None ,None)
+            ret = 1
+        return ret
+
+    def undistort(self, image):
+        image_size = (image.shape[1], image.shape[0])
+        ret = 0 if self.image_size != image_size else 1
+
+        if ret == 0:
+            self.image_size = image_size
+            ret = camera.calibrate()
+        undistort = None
+        if ret == 1:
+            undistort = cv2.undistort(image, self.mtx, self.dist, None, self.mtx)
+        return undistort
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -52,15 +73,13 @@ if __name__ == '__main__':
                         help='directory to write images to')
     FLAGS, unparsed = parser.parse_known_args()
 
-    object_points, image_points = camera_cal_init(FLAGS.dir)
+    camera = Camera(FLAGS.dir)
 
     #print calibration image differences
     images = glob.glob(os.path.join(FLAGS.dir, '*.jpg'))
     for fname in images:
         image = mpimg.imread(fname)
-        image_size = (image.shape[1], image.shape[0])
-        ret, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(object_points, image_points, image_size, None ,None)
-        undistorted_image = cv2.undistort(image, mtx, dist, None, mtx)
+        undistorted_image = camera.undistort(image)
         if FLAGS.debug == 1:
             show_images(image, undistorted_image, 'Undistorted Image', 'Distorted Calibration Image')
         else:
@@ -73,9 +92,7 @@ if __name__ == '__main__':
     images = glob.glob(os.path.join(FLAGS.testdir, '*.jpg'))
     for fname in images:
         image = mpimg.imread(fname)
-        image_size = (image.shape[1], image.shape[0])
-        ret, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(object_points, image_points, image_size, None ,None)
-        undistorted_image = cv2.undistort(image, mtx, dist, None, mtx)
+        undistorted_image = camera.undistort(image)
         if FLAGS.debug == 1:
             show_images(image, undistorted_image, 'Undistorted Image', 'Distorted Test Image')
         else:
