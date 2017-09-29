@@ -121,7 +121,8 @@ def lane_mask(img):
 
     l_output = _hls_mask( l_channel, (0,255) )
 
-    gradx = gradient_mask(l_output, orient='x', sobel_kernel=9, thresh=(20, 255), should_gray=False)
+#    gradx = gradient_mask(l_output, orient='x', sobel_kernel=9, thresh=(20, 255), should_gray=False)
+    gradx = gradient_mask(img, orient='x', sobel_kernel=9, thresh=(20,100))
     s_binary = _hls_mask( s_channel, thresh=(120,255))
     l_binary = _hls_mask( l_channel, thresh=(40,255) )
     lsg_binary = np.zeros_like(gradx)
