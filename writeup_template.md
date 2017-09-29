@@ -133,8 +133,6 @@ Using the `draw_lane()` method of the `Lane` class, I draw the lane area back on
 
 Using this [source video](./project_video.mp4) I ran each frame through my pipeline and converted the frames back into an m4v video: [Here](./final_video.m4v)
 
-![final_gif][final_gif]
-
 ---
 
 ### Discussion
