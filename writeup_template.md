@@ -23,6 +23,7 @@ The goals / steps of this project are the following:
 [warped]: ./examples/warped_straight_lines1.jpg "Warped undistorted with dest lines"
 [thresh_warped]: ./examples/perspective_thresh_warped.jpg "Masked image with perspective transform"
 [lanes]: ./examples/lanes.png "Colored/Curved lane lines"
+[color_lane]: ./examples/color_lane.jpg "Colored Curved Lane"
 [video1]: ./project_video.mp4 "Video"
 
 ## [Rubric](https://review.udacity.com/#!/rubrics/571/view) Points
@@ -106,13 +107,21 @@ I drew curved lines and colored the lane lines from the mask using numpy's polyf
 
 #### 5. Describe how (and identify where in your code) you calculated the radius of curvature of the lane and the position of the vehicle with respect to center.
 
-I did this in lines # through # in my code in `my_other_file.py`
+This is done in `lanes.py` in the Lane class function `get_curves_and_offset()`, which uses the formula given in the lesson (based off the formula from the Lane() init method): `(1 + (2 * Ay + B)^2)^(3/2)]/|2*A|`
 
+The offset of the car from the road's center assumes the camera is mounted in the middle of the car. We find the distance of the two lanes via: 
+```python
+camera_position = self.img.shape[1] / 2.                                                                                  
+        lane_center = (right_fitx[-1] + left_fitx[-1]) / 2.                                                                       
+        self.center_offset_pixels = camera_position - lane_center                                                                 
+        self.center_offset_meters = xm_per_pix * center_offset_pixels 
+        ```
+        
 #### 6. Provide an example image of your result plotted back down onto the road such that the lane area is identified clearly.
 
-I implemented this step in lines # through # in my code in `yet_another_file.py` in the function `map_lane()`.  Here is an example of my result on a test image:
+Using the `draw_lane()` method of the `Lane` class, I draw the lane area back onto the lane:
 
-![alt text][image6]
+![color_lane][color_lane]
 
 ---
 
