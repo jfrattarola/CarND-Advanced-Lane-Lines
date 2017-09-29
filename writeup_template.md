@@ -26,6 +26,7 @@ The goals / steps of this project are the following:
 [color_lane]: ./examples/color_lane.jpg "Colored Curved Lane"
 [video1]: ./project_video.mp4 "Video"
 [final_video]: ./final_video.m4v "Final Project Video"
+[final_gif]: ./final_video.gif "Final GIF"
 
 ## [Rubric](https://review.udacity.com/#!/rubrics/571/view) Points
 
@@ -131,6 +132,8 @@ Using the `draw_lane()` method of the `Lane` class, I draw the lane area back on
 #### 1. Provide a link to your final video output.  Your pipeline should perform reasonably well on the entire project video (wobbly lines are ok but no catastrophic failures that would cause the car to drive off the road!).
 
 Using this [source video](./project_video.mp4) I ran each frame through my pipeline and converted the frames back into an m4v video: [Here](./final_video.m4v)
+
+![final_gif][final_gif]
 
 ---
 
