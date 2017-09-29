@@ -15,11 +15,8 @@ The goals / steps of this project are the following:
 
 [dist_img]: ./examples/distort_output.jpg "Distorted"
 [undist_img]: ./examples/undistort_output.jpg "Undistorted"
-[image2]: ./test_images/test1.jpg "Road Transformed"
-[image3]: ./examples/binary_combo_example.jpg "Binary Example"
-[image4]: ./examples/warped_straight_lines.jpg "Warp Example"
-[image5]: ./examples/color_fit_lines.jpg "Fit Visual"
-[image6]: ./examples/example_output.jpg "Output"
+[dist_cars]: ./test_images/distorted_cars.jpg "Distorted Cars"
+[undist_cars]: ./test_images/undistorted_cars.jpg "Undistorted Cars"
 [video1]: ./project_video.mp4 "Video"
 
 ## [Rubric](https://review.udacity.com/#!/rubrics/571/view) Points
@@ -34,7 +31,7 @@ This file produces the class object `Camera`. The init function takes in the pat
 
 This class also has an `undistort()` function which will use the distortion coefficients and a provided image to obtain an undistorted version of the image, as seen here:
 
-#### Distorted Original
+#### Distorted Original Calibration Image
 
 ![Distorted Original][dist_img] 
 
@@ -48,7 +45,15 @@ This class also has an `undistort()` function which will use the distortion coef
 #### 1. Provide an example of a distortion-corrected image.
 
 To demonstrate this step, I will describe how I apply the distortion correction to one of the test images like this one:
-![alt text][image2]
+
+#### Distorted Cars Original
+
+![Distorted Cars][dist_cars]
+
+#### Undistorted Cars
+
+![Undistorted Cars][undist_cars]
+
 
 #### 2. Describe how (and identify where in your code) you used color transforms, gradients or other methods to create a thresholded binary image.  Provide an example of a binary image result.
 
