@@ -25,6 +25,7 @@ The goals / steps of this project are the following:
 [lanes]: ./examples/lanes.png "Colored/Curved lane lines"
 [color_lane]: ./examples/color_lane.jpg "Colored Curved Lane"
 [video1]: ./project_video.mp4 "Video"
+[final_video]: ./final_video.m4v "Final Project Video"
 
 ## [Rubric](https://review.udacity.com/#!/rubrics/571/view) Points
 
@@ -129,7 +130,7 @@ Using the `draw_lane()` method of the `Lane` class, I draw the lane area back on
 
 #### 1. Provide a link to your final video output.  Your pipeline should perform reasonably well on the entire project video (wobbly lines are ok but no catastrophic failures that would cause the car to drive off the road!).
 
-Here's a [link to my video result](./project_video.mp4)
+Using this [source video](./project_video.mp4) I ran each frame through my pipeline and converted the frames back into an m4v video: [Here](./final_video.m4v)
 
 ---
 
@@ -137,4 +138,4 @@ Here's a [link to my video result](./project_video.mp4)
 
 #### 1. Briefly discuss any problems / issues you faced in your implementation of this project.  Where will your pipeline likely fail?  What could you do to make it more robust?
 
-Here I'll talk about the approach I took, what techniques I used, what worked and why, where the pipeline might fail and how I might improve it if I were going to pursue this project further.  
+This project was by far the hardest.  It took me so much time to complete. I learned that a **lot** of the success is dependant on getting the earlier threshold binaries correct.  I had a weird bug where it kept crashing halfway through because the right lane just went all over the place. I had been using the L channel for sobel gradient instead of grayscale (people were saying they had good success with this). I went over and over with debugging statements trying to find the problem. Eventually, I switched back to grayscale for my sobel x gradient and everything was fixed.  Insane!
